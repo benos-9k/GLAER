@@ -178,9 +178,15 @@ void main() {
 )delim";
 
 
+void error_callback_glfw(int id, const char *msg) {
+	cout << "GLFW error " << id << ": " << msg << endl;
+}
+
 int main() {
 
 	GLFWwindow* window;
+
+	glfwSetErrorCallback(error_callback_glfw);
 
 	if (!glfwInit()) {
 		abort();
