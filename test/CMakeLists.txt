@@ -32,6 +32,8 @@ set(gltest_hdr)
 
 add_executable(gltest ${gltest_hdr} ${gltest_src})
 
+add_definitions(${GLAER_DEFINITIONS})
+
 target_link_libraries(gltest glfw ${GLFW_LIBRARIES} glaer ${GLAER_LIBRARIES})
 
 
