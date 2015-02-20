@@ -16,7 +16,7 @@ The function documentation can be updated by first nuking the `/docs` directory,
 
 The scripts currently run under (and the CMake project looks for) Python 2.7.
 
-The package [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/) is required and is included in GLAER for convenience.
+The package [Beautiful Soup 4](http://www.crummy.com/software/BeautifulSoup/) is required and is included in GLAER for convenience. However, Beautiful Soup requires [lxml](http://lxml.de/installation.html) in order to parse XML. This can be installed with `pip install [--user] lxml`. On Windows, you may need to specify a version number if there is no pre-built package for the latest version, e.g `pip install lxml==3.4.1`.
 
 ## Test Project
 
