@@ -7,10 +7,7 @@ This is currently _alpha_ software; it has only just reached the point where thi
 
 ## OpenGL XML Documentation
 
-The primary API specification can be updated with
-`svn co --username anonymous --password anonymous https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/ api` from the repository root.
-
-The function documentation can be updated by first nuking the `/docs` directory, then running `./getdocs.py`.
+The API specification './api/gl.xml' will be downloaded if it is not present. The documentation is not critical to operation, and as such will not be downloaded if it does not exist. GLAER does however come with both the API specification and documentation already present. To update the API specification and documentation, import the Python module `glapi` and call `glapi.update_api()` and `glapi.update_docs()` respectively, then reload the module.
 
 ## Python
 
