@@ -16,13 +16,13 @@
 #
 
 import bs4
-import sys, os, re, inspect, urllib2
+import sys, os, errno, re, inspect, urllib2, zipfile
 
 # get script directory so we can find resources
 thisdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 def _get_page(url):
-	'''download a webpage'''
+	'''download a webpage; returns a str (does not decode)'''
 	headers = {'User-Agent': 'Mozilla/5.0'}
 	req = urllib2.Request(url,headers=headers)
 	return urllib2.urlopen(req).read()
@@ -31,6 +31,11 @@ def _get_page(url):
 def _get_manpage(manpath):
 	'''download a GL manpage, e.g. 'man2/glAccum.xml' '''
 	return _get_page('https://cvs.khronos.org/svn/repos/ogl/trunk/ecosystem/public/sdk/docs/' + manpath)
+# }
+
+def _get_apipage(apipath):
+	'''download a GL API spec page, e.g. 'gl.xml' '''
+	return _get_page('https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/' + apipath)
 # }
 
 def _ensure_dir_exists(path):
@@ -44,31 +49,35 @@ def _ensure_dir_exists(path):
 
 def update_api():
 	'''update the API specification files (gl.xml)'''
+	print >>sys.stderr, 'glapi: fetching API specification'
 	_ensure_dir_exists(thisdir + '/api')
-	page = _get_page('https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/gl.xml')
-	print type(page)
+	page = _get_apipage('gl.xml')
 	with open(thisdir + '/api/gl.xml', 'w') as f: f.write(page)
 # }
 
 def update_docs():
 	'''update the API documentation files'''
-	print >>sys.stderr, 'glapi.py: fetching documentation'
+	print >>sys.stderr, 'glapi: fetching API documentation'
 	# save all xml docs
-	for version in (2, 3, 4):
-		man = 'man{0}'.format(version)
+	for manid in (2, 3, 4):
+		man = 'man{0}'.format(manid)
 		manpage = _get_manpage(man)
 		_ensure_dir_exists(thisdir + '/docs/' + man)
 		soup = bs4.BeautifulSoup(manpage, features='xml')
 		file_tags = [file_tag for file_tag in soup.find('svn').find('index').find_all('file')]
+		filenames = []
+		# process all files mentioned in this list of manpages
 		for i, file_tag in enumerate(file_tags):
 			href = str(file_tag['href']).strip()
 			# skip non-xml
 			if not href.endswith('.xml'): continue
-			print >>sys.stderr, 'glapi.py: fetching [{man} {i:5} /{c:5}] {href}'.format(man=man, i=i+1, c=len(file_tags), href=href)
-			# skip files we already have
+			# record filename
+			print >>sys.stderr, 'glapi: fetching [{man} {i}/{c}] {href}'.format(man=man, i=i+1, c=len(file_tags), href=href)
 			filename = thisdir + '/docs/{man}/{href}'.format(man=man, href=href)
+			filenames.append(filename)
+			# skip downloading files we already have
 			if os.path.exists(filename):
-				print >>sys.stderr, 'glapi.py: skipping'
+				print >>sys.stderr, 'glapi: ... exists, skipping'
 				continue
 			# }
 			# download and save
@@ -80,14 +89,18 @@ def update_docs():
 			# prevent corruption if downloader is aborted
 			os.rename(filename + '.part', filename)
 		# }
-		# TODO save all manX docs to one file each
-		
+		# zip up downloaded manpages
+		with zipfile.ZipFile(thisdir + '/docs/{man}.zip'.format(man=man), 'w') as file:
+			for filename in filenames:
+				file.write(filename, os.path.basename(filename), zipfile.ZIP_DEFLATED)
+			# }
+		# }
 	# }
 # }
 
 # download API specification if not present
 if not os.path.exists(thisdir + '/api/gl.xml'):
-	print >>sys.stderr, 'glapi.py: api/gl.xml not present, downloading...'
+	print >>sys.stderr, 'glapi: api/gl.xml not present, downloading...'
 	_update_api()
 # }
 
