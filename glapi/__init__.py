@@ -15,6 +15,8 @@
 # @author Ben Allen
 #
 
+# TODO 'If-modified-since' for downloads
+
 import bs4
 import sys, os, errno, re, inspect, urllib2, zipfile
 
