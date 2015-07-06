@@ -31,11 +31,6 @@ public:
 	explicit shader_error(const std::string &what_ = "Generic shader error.") : std::runtime_error(what_) { }
 };
 
-class shader_type_error : public shader_error {
-public:
-	explicit shader_type_error(const std::string &what_ = "Bad shader type.") : shader_error(what_) { }
-};
-
 class shader_compile_error : public shader_error {
 public:
 	explicit shader_compile_error(const std::string &what_ = "Shader compilation failed.") : shader_error(what_) { }
@@ -210,6 +205,7 @@ int main() {
 
 	// initialize glaer context
 	if (!glaerInitCurrentContext()) {
+		glfwTerminate();
 		abort();
 	}
 
@@ -221,7 +217,7 @@ int main() {
 	while (!glfwWindowShouldClose(window)) {
 		
 		int w, h;
-		glfwGetWindowSize(window, &w, &h);
+		glfwGetFramebufferSize(window, &w, &h);
 		glViewport(0, 0, w, h);
 
 		// render!
