@@ -15,29 +15,50 @@
 # @author Ben Allen
 #
 
-# TODO 'If-modified-since' for downloads
+# TODO nice errors here
+import lxml
 
 import bs4
-import sys, os, errno, re, inspect, urllib2, zipfile
+import sys, os, errno, re, inspect, httplib, zipfile, time
 
 # get script directory so we can find resources
 thisdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-def _get_page(url):
-	'''download a webpage; returns a str (does not decode)'''
-	headers = {'User-Agent': 'Mozilla/5.0'}
-	req = urllib2.Request(url,headers=headers)
-	return urllib2.urlopen(req).read()
+# connection to khronos cvs server
+_khronos_cvs_connection = None
+
+def _get_khronos_cvs_page(url, if_modified_since=None):
+	'''download a cvs.khronos.org page; returns a str (does not decode), or None if not modified'''
+	# reuse connection
+	# not actually useful - the server responds with 'connection: close'
+	global _khronos_cvs_connection
+	if _khronos_cvs_connection is None: _khronos_cvs_connection = httplib.HTTPSConnection('cvs.khronos.org')
+	try:
+		# send request
+		headers = { 'User-Agent': 'Mozilla/5.0', 'Connection': 'keep-alive' }
+		if if_modified_since: headers['If-Modified-Since'] = if_modified_since
+		_khronos_cvs_connection.request('GET', url, headers=headers)
+		res = _khronos_cvs_connection.getresponse()
+		# read response
+		page = res.read()
+		# return None if not modified
+		if res.status == httplib.NOT_MODIFIED: return None
+		return page
+	except httplib.ImproperConnectionState:
+		# if something broke, reconnect and try again
+		_khronos_cvs_connection = None
+		return _get_khronos_cvs_page(url, if_modified_since=if_modified_since)
+	# }
 # }
 
-def _get_manpage(manpath):
+def _get_manpage(manpath, if_modified_since=None):
 	'''download a GL manpage, e.g. 'man2/glAccum.xml' '''
-	return _get_page('https://cvs.khronos.org/svn/repos/ogl/trunk/ecosystem/public/sdk/docs/' + manpath)
+	return _get_khronos_cvs_page('/svn/repos/ogl/trunk/ecosystem/public/sdk/docs/' + manpath, if_modified_since=if_modified_since)
 # }
 
 def _get_apipage(apipath):
 	'''download a GL API spec page, e.g. 'gl.xml' '''
-	return _get_page('https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/' + apipath)
+	return _get_khronos_cvs_page('/svn/repos/ogl/trunk/doc/registry/public/api/' + apipath, if_modified_since=if_modified_since)
 # }
 
 def _ensure_dir_exists(path):
@@ -47,6 +68,30 @@ def _ensure_dir_exists(path):
 	except OSError, e:
 		if e.errno != errno.EEXIST: raise
 	# }
+# }
+
+def _ensure_file_removed(path):
+	'''remove a file, but don't error if it doesn't exist'''
+	try:
+		os.remove(path)
+	except OSError, e:
+		if e.errno != errno.ENOENT: raise
+	# }
+# }
+
+def _time2stamp(t):
+	'''turn a time.time() value into a string suitable for If-Modified-Since'''
+	u = time.gmtime(t)
+	# looks like: Sat, 29 Oct 1994 19:43:31 GMT
+	return '{wday_name}, {mday} {month_name} {year} {hour:02}:{minute:02}:{second:02} GMT'.format(
+		wday_name = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][u.tm_wday],
+		mday = u.tm_mday,
+		month_name = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][u.tm_mon - 1],
+		year = u.tm_year,
+		hour = u.tm_hour,
+		minute = u.tm_min,
+		second = u.tm_sec
+	)
 # }
 
 def update_api():
@@ -59,43 +104,89 @@ def update_api():
 
 def update_docs():
 	'''update the API documentation files'''
-	print >>sys.stderr, 'glapi: fetching API documentation'
+	print >>sys.stderr, 'glapi: updating API documentation'
 	# save all xml docs
 	for manid in (2, 3, 4):
 		man = 'man{0}'.format(manid)
-		manpage = _get_manpage(man)
+		manpage = _get_manpage(man + '/')
 		_ensure_dir_exists(thisdir + '/docs/' + man)
+		
+		# read last-modified stamp and make new stamp
+		oldstamp = _time2stamp(0)
+		try:
+			with open(thisdir + '/docs/' + man + '.stamp') as stampfile:
+				oldstamp = stampfile.read()
+			# }
+		except IOError:
+			pass
+		# }
+		newstamp = _time2stamp(time.time())
+		
+		# extract zip file as needed
+		try:
+			with zipfile.ZipFile(thisdir + '/docs/{man}.zip'.format(man=man)) as manzip:
+				for name in manzip.namelist():
+					filepath = thisdir + '/docs/{man}/{name}'.format(man=man, name=name)
+					if not os.path.exists(filepath):
+						# file doesn't exist, extract it
+						print >>sys.stderr, 'glapi: extracting {name} from {man}.zip'.format(name=name, man=man)
+						_ensure_file_removed(filepath)
+						with open(filepath + '.part', 'w') as file:
+							file.write(manzip.read(name))
+						# }
+						# rename to mark completion
+						# prevent corruption if extracting is aborted
+						os.rename(filepath + '.part', filepath)
+					# }
+				# }
+			# }
+		except IOError:
+			print >>sys.stderr, 'glapi: {man}.zip not readable'.format(man=man)
+		# }
+		
+		# get list of manpages
 		soup = bs4.BeautifulSoup(manpage, features='xml')
-		file_tags = [file_tag for file_tag in soup.find('svn').find('index').find_all('file')]
-		filenames = []
-		# process all files mentioned in this list of manpages
+		file_tags = list(soup.find('svn').find('index').find_all('file'))
+		filepaths = []
+		
+		# process all xml files mentioned in this list of manpages
 		for i, file_tag in enumerate(file_tags):
 			href = str(file_tag['href']).strip()
 			# skip non-xml
 			if not href.endswith('.xml'): continue
-			# record filename
-			print >>sys.stderr, 'glapi: fetching [{man} {i}/{c}] {href}'.format(man=man, i=i+1, c=len(file_tags), href=href)
-			filename = thisdir + '/docs/{man}/{href}'.format(man=man, href=href)
-			filenames.append(filename)
-			# skip downloading files we already have
-			if os.path.exists(filename):
-				print >>sys.stderr, 'glapi: ... exists, skipping'
-				continue
+			# record filepath
+			print >>sys.stderr, 'glapi: updating [{man} {i}/{c}] {href}'.format(man=man, i=i+1, c=len(file_tags), href=href)
+			filepath = thisdir + '/docs/{man}/{href}'.format(man=man, href=href)
+			filepaths.append(filepath)
+			
+			# download if modified since last update stamp
+			page = _get_manpage('{man}/{href}'.format(man=man, href=href), if_modified_since=oldstamp)
+			
+			# write to file if modified
+			if page is not None:
+				print >>sys.stderr, 'glapi: ... was modified; new version downloaded'
+				_ensure_file_removed(filepath)
+				with open(filepath + '.part', 'w') as file:
+					file.write(page)
+				# }
+				# rename to mark completion
+				# prevent corruption if downloading is aborted
+				os.rename(filepath + '.part', filepath)
 			# }
-			# download and save
-			page = _get_manpage('{man}/{href}'.format(man=man, href=href))
-			with open(filename + '.part', 'w') as file:
-				file.write(page)
-			# }
-			# rename to mark completion
-			# prevent corruption if downloader is aborted
-			os.rename(filename + '.part', filename)
 		# }
+		
 		# zip up downloaded manpages
-		with zipfile.ZipFile(thisdir + '/docs/{man}.zip'.format(man=man), 'w') as file:
-			for filename in filenames:
-				file.write(filename, os.path.basename(filename), zipfile.ZIP_DEFLATED)
+		print >>sys.stderr, 'glapi: repacking {man}.zip'.format(man=man)
+		with zipfile.ZipFile(thisdir + '/docs/{man}.zip'.format(man=man), 'w') as manzip:
+			for filepath in filepaths:
+				print >>sys.stderr, 'glapi: zipping {name} into {man}.zip'.format(name=os.path.basename(filepath), man=man)
+				manzip.write(filepath, os.path.basename(filepath), zipfile.ZIP_DEFLATED)
 			# }
+		# }
+		
+		# write new stamp
+		with open(thisdir + '/docs/' + man + '.stamp', 'w') as stampfile:
+			stampfile.write(newstamp)
 		# }
 	# }
 # }
@@ -103,7 +194,7 @@ def update_docs():
 # download API specification if not present
 if not os.path.exists(thisdir + '/api/gl.xml'):
 	print >>sys.stderr, 'glapi: api/gl.xml not present, downloading...'
-	_update_api()
+	update_api()
 # }
 
 class API(object):
