@@ -1,41 +1,29 @@
-project (GLTEST CXX C)
-cmake_minimum_required (VERSION 2.8.8)
 
-# OpenGL
-find_package(OpenGL)
-
-# GLFW
-add_subdirectory("${PROJECT_SOURCE_DIR}/ext/glfw-3.0.3" "${PROJECT_BINARY_DIR}/ext/glfw")
-include_directories("${PROJECT_SOURCE_DIR}/ext/glfw-3.0.3/include")
-
-# GLAER
-add_subdirectory(".." "${PROJECT_BINARY_DIR}/ext/glaer")
-include_directories("${GLAER_BINARY_DIR}/src/include")
-
-if(MSVC)
-	# Force to always compile with W4
-	if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-		string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-	else()
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-	endif()
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -std=c++1y -g")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -std=c++1y -g")
+# GLFW (if not already available)
+if(NOT TARGET glfw)
+	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw-3.0.3")
 endif()
 
+# don't dereference quoted variables in if() args
+cmake_policy(SET CMP0054 NEW)
 
+# Compile options
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+	add_compile_options(/W4)
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+	add_compile_options(-std=c++1y -Wall -Wextra -pedantic)
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Apple)?Clang$")
+	add_compile_options(-std=c++1y -pthread -Wall -Wextra -pedantic)
+endif()
 
+# test exe target
+add_executable(glaer_test "src/main.cpp")
 
-set(gltest_src "src/main.cpp")
-set(gltest_hdr)
+set_property(TARGET glaer_test PROPERTY FOLDER "GLAER")
 
-add_executable(gltest ${gltest_hdr} ${gltest_src})
-
-add_definitions(${GLAER_DEFINITIONS})
-
-target_link_libraries(gltest glfw ${GLFW_LIBRARIES} glaer ${GLAER_LIBRARIES})
+# ensure GLFW is linked properly
+target_include_directories(glaer_test PRIVATE "${GLFW_SOURCE_DIR}/include")
+target_link_libraries(glaer_test glfw ${GLFW_LIBRARIES} glaer)
 
 
 

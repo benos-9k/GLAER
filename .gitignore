@@ -1,7 +1,6 @@
 
-# build folders
+# build files
 /build/*
-/test/build/*
 
 # compiled python
 *.pyc
