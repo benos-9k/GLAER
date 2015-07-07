@@ -2,6 +2,7 @@
 /*** GLAER: begin manually authored code ***/
 
 #define GLAER_NO_GL_ENUMS
+#define GLAER_NO_GL_FUNCTYPES
 #define GLAER_NO_GL_FUNCTIONS
 #include <GLAER/glaer.h>
 

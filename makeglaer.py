@@ -176,20 +176,30 @@ extern "C" {
 	out.write('\n/*** GLAER: begin automatically generated code ***/\n')
 	
 	# defines for enums in GL namespace
-	out.write('\n/* Defiens for enums in GL namespace */\n')
+	out.write('\n/* Defines for enums in GL namespace */\n')
 	out.write('#ifndef GLAER_NO_GL_ENUMS\n')
 	for enum in glapi.enums.itervalues():
 		out.write('#define {name} {value}\n'.format(name=enum.name, value=enum.value))
 	# }
 	out.write('#endif /* GLAER_NO_GL_ENUMS */\n')
 	
-	# typedefs for glaer_gl function pointers
-	out.write('\n/* typedefs for glaer_gl function pointer types */\n')
+	# typedefs for GL function pointers in GLAER namespace
+	out.write('\n/* Typedefs for GL function pointers in GLAER namespace */\n')
 	for cmd in glapi.commands.itervalues():
 		out.write('typedef ' + cmd.format_proto('(APIENTRY *GlaerPFn_{name})'.format(name=cmd.name)) + '(')
 		out.write(', '.join([param.format_proto() for param in cmd.params]))
 		out.write(');\n')
 	# }
+	
+	# typedefs for GL function pointers as in glext.h
+	out.write('\n/* Typedefs for GL function pointers as in glext.h */\n')
+	out.write('#ifndef GLAER_NO_GL_FUNCTYPES\n')
+	for cmd in glapi.commands.itervalues():
+		out.write('typedef ' + cmd.format_proto('(APIENTRY *PFN{name}PROC)'.format(name=cmd.name.upper())) + '(')
+		out.write(', '.join([param.format_proto() for param in cmd.params]))
+		out.write(');\n')
+	# }
+	out.write('#endif /* GLAER_NO_GL_FUNCTYPES */\n')
 	
 	# context struct
 	out.write('\n/* GLAER Context */\nstruct GlaerContext_ {\n')
