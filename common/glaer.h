@@ -141,7 +141,7 @@ GLAERAPI void APIENTRY glaerSetErrorCallback(GlaerErrorCallbackProc);
 
 /*
  * Get a pointer to the current GLAER context.
- * Wrapper for the user function pointer set by glaerSetContextProvider().
+ * Wrapper for the user function pointer set by glaerSetCurrentContextProvider().
  * Thread-safety: as for the user context provider.
  */
 GLAERAPI GlaerContext * APIENTRY glaerGetCurrentContext();
