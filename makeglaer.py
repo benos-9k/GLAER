@@ -275,6 +275,7 @@ GLboolean APIENTRY glaerInitCurrentContext() {
 	GLAER_GET_PROC_ADDRESS_DECL
 	ctx = glaerGetCurrentContext();
 	GLAER_GET_PROC_ADDRESS_INIT
+	if (!glaerCheckInit(ctx)) return 0;
 ''')
 	for cmd in glapi.commands.itervalues():
 		out.write('\tctx->glaer_{name} = (GlaerPFn_{name}) glaerGetProcAddress("{name}");\n'.format(name=cmd.name))

@@ -123,21 +123,21 @@ typedef GLintptr GLvdpauSurfaceNV;
 /* GLAER types */
 struct GlaerContext_;
 typedef struct GlaerContext_ GlaerContext;
-typedef GlaerContext * (*GlaerContextProvider)();
-typedef void (*GlaerErrorCallback)(const GLchar *message);
+typedef GlaerContext * (*GlaerContextProviderProc)();
+typedef void (*GlaerErrorCallbackProc)(const GLchar *message);
 typedef void (APIENTRY *GlaerPFn)();
 
 /*
  * Set the function that will be called to determine the current context.
  * Thread-safety: main thread only.
  */
-GLAERAPI void APIENTRY glaerSetCurrentContextProvider(GlaerContextProvider);
+GLAERAPI void APIENTRY glaerSetCurrentContextProvider(GlaerContextProviderProc);
 
 /*
  * Set the error callback.
  * Thread-safety: main thread only.
  */
-GLAERAPI void APIENTRY glaerSetErrorCallback(GlaerErrorCallback);
+GLAERAPI void APIENTRY glaerSetErrorCallback(GlaerErrorCallbackProc);
 
 /*
  * Get a pointer to the current GLAER context.

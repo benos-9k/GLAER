@@ -11,7 +11,7 @@ using namespace std;
 
 GlaerContext ctx;
 
-GlaerContext * current_glaer_context_impl() {
+GlaerContext * get_current_glaer_context() {
 	return &ctx;
 }
 
@@ -177,11 +177,16 @@ void error_callback_glfw(int id, const char *msg) {
 	cout << "GLFW error " << id << ": " << msg << endl;
 }
 
+void error_callback_glaer(const GLchar *msg) {
+	cout << "GLAER error: " << msg << endl;
+}
+
 int main() {
 
 	GLFWwindow* window;
 
 	glfwSetErrorCallback(error_callback_glfw);
+	glaerSetErrorCallback(error_callback_glaer);
 
 	if (!glfwInit()) {
 		abort();
@@ -201,7 +206,7 @@ int main() {
 	glfwMakeContextCurrent(window);
 
 	// tell glaer how to get its current context
-	glaerSetCurrentContextProvider(current_glaer_context_impl);
+	glaerSetCurrentContextProvider(get_current_glaer_context);
 
 	// initialize glaer context
 	if (!glaerInitCurrentContext()) {
