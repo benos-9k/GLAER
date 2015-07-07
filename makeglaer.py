@@ -18,7 +18,7 @@ import argparse
 thisdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 # main version number
-version = '0.0.0'
+__version__ = '0.0.0'
 
 # output files (default paths)
 _out_h = './glaer.h'
@@ -164,7 +164,7 @@ extern "C" {
 #define GLAER_VERSION_MAJOR {0}
 #define GLAER_VERSION_MINOR {1}
 #define GLAER_VERSION_PATCH {2}
-'''.format(*version.split('.')))
+'''.format(*__version__.split('.')))
 	
 	# manually authored code
 	with open(thisdir + '/common/glaer.h') as file:
@@ -174,6 +174,22 @@ extern "C" {
 	# }
 	
 	out.write('\n/*** GLAER: begin automatically generated code ***/\n')
+	
+	# defines for API versions
+	out.write('\n/* Defines for API versions */\n')
+	out.write('#ifndef GLAER_NO_GL_VERSIONS\n')
+	for version in glapi.versions.itervalues():
+		out.write('#define {name} 1\n'.format(name=version.name))
+	# }
+	out.write('#endif /* GLAER_NO_GL_VERSIONS */\n')
+	
+	# defines for API extensions
+	out.write('\n/* Defines for API extensions */\n')
+	out.write('#ifndef GLAER_NO_GL_EXTENSIONS\n')
+	for extension in glapi.extensions.itervalues():
+		out.write('#define {name} 1\n'.format(name=extension.name))
+	# }
+	out.write('#endif /* GLAER_NO_GL_EXTENSIONS */\n')
 	
 	# defines for enums in GL namespace
 	out.write('\n/* Defines for enums in GL namespace */\n')
