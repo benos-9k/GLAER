@@ -27,8 +27,11 @@ add_custom_command(
 		"${PROJECT_BINARY_DIR}/src/glaer.c"
 	DEPENDS
 		"${PROJECT_SOURCE_DIR}/makeglaer.py"
-		"${PROJECT_SOURCE_DIR}/glapi.py"
-		"${PROJECT_SOURCE_DIR}/api/gl.xml"
+		"${PROJECT_SOURCE_DIR}/glapi/__init__.py"
+		"${PROJECT_SOURCE_DIR}/glapi/api/gl.xml"
+		"${PROJECT_SOURCE_DIR}/glapi/docs/man2.zip"
+		"${PROJECT_SOURCE_DIR}/glapi/docs/man3.zip"
+		"${PROJECT_SOURCE_DIR}/glapi/docs/man4.zip"
 		"${PROJECT_SOURCE_DIR}/common/glaer.h"
 		"${PROJECT_SOURCE_DIR}/common/glaer.c"
 	COMMAND

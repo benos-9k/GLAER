@@ -458,94 +458,98 @@ for extension_tag in _apisoup.registry.extensions.find_all('extension'):
 
 # documentation
 for man in ['man2', 'man3', 'man4']:
-	if os.path.isdir(thisdir + '/docs/' + man):
-		for filename in os.listdir(thisdir + '/docs/' + man):
-			if not filename.endswith('.xml'): continue
-			with open(thisdir + '/docs/{man}/{name}'.format(man=man, name=filename)) as file:
-				soup = bs4.BeautifulSoup(file, features='xml')
-				
-				try:
+	try:
+		with zipfile.ZipFile(thisdir + '/docs/{man}.zip'.format(man=man)) as manzip:
+			for filename in manzip.namelist():
+				if not filename.endswith('.xml'): continue
+				with manzip.open(filename) as file:
+					soup = bs4.BeautifulSoup(file, features='xml')
 					
-					# commands this doc page applies to
-					# refnamediv is unfortunately not always usable for this
-					doccmds = []
-					# There are doc files for GLU and GLX commands (which are not part of GL itself),
-					# GLSL functions, and some other things; we have to make sure they don't break anything.
-					if soup.refentry and soup.refentry.refsynopsisdiv:
-						for synoptag in soup.refentry.refsynopsisdiv.find_all('funcsynopsis'):
-							if synoptag:
-								# func prototypes according to doc page
-								for prototag in synoptag.find_all('funcprototype'):
-									cmd = commands.get(prototag.funcdef.function.string.strip())
-									if cmd:
-										doccmds.append(cmd)
-										# re-write param names according to doc page;
-										# these sometimes differ from the param names in gl.xml.
-										# we _CANNOT_ re-write the entire prototype because the doc pages
-										# contain mistakes like misspelt typenames.
-										for (i, ptag) in enumerate(prototag.find_all('paramdef')):
-											# functions of no args show up with one arg with def 'void'
-											# 'void' may or may not be inside a parameter tag, which may not exist
-											if ptag.get_text().strip() != 'void':
-												# glTextureParameterfv has a stray '.' on a param name and a stray newline too
-												cmd.params[i].name = unicode(ptag.parameter.string).replace('\n', ' ').strip(' .')
+					try:
+						
+						# commands this doc page applies to
+						# refnamediv is unfortunately not always usable for this
+						doccmds = []
+						# There are doc files for GLU and GLX commands (which are not part of GL itself),
+						# GLSL functions, and some other things; we have to make sure they don't break anything.
+						if soup.refentry and soup.refentry.refsynopsisdiv:
+							for synoptag in soup.refentry.refsynopsisdiv.find_all('funcsynopsis'):
+								if synoptag:
+									# func prototypes according to doc page
+									for prototag in synoptag.find_all('funcprototype'):
+										cmd = commands.get(prototag.funcdef.function.string.strip())
+										if cmd:
+											doccmds.append(cmd)
+											# re-write param names according to doc page;
+											# these sometimes differ from the param names in gl.xml.
+											# we _CANNOT_ re-write the entire prototype because the doc pages
+											# contain mistakes like misspelt typenames.
+											for (i, ptag) in enumerate(prototag.find_all('paramdef')):
+												# functions of no args show up with one arg with def 'void'
+												# 'void' may or may not be inside a parameter tag, which may not exist
+												if ptag.get_text().strip() != 'void':
+													# glTextureParameterfv has a stray '.' on a param name and a stray newline too
+													cmd.params[i].name = unicode(ptag.parameter.string).replace('\n', ' ').strip(' .')
+												# }
 											# }
 										# }
 									# }
 								# }
 							# }
 						# }
-					# }
-					
-					# no relevant GL commands -> do nothing
-					if len(doccmds) == 0: continue
-					
-					# doc section tags
-					# both 'id' (man2, man3) and 'xml:id' (man4) are used
-					params_tag = soup.refentry.find(lambda tag: tag.name == 'refsect1' and 'parameters' in [tag.get('xml:id'), tag.get('id')])
-					desc_tag = soup.refentry.find(lambda tag: tag.name == 'refsect1' and 'description' in [tag.get('xml:id'), tag.get('id')])
-					notes_tag = soup.refentry.find(lambda tag: tag.name == 'refsect1' and 'notes' in [tag.get('xml:id'), tag.get('id')])
-					errors_tag = soup.refentry.find(lambda tag: tag.name == 'refsect1' and 'errors' in [tag.get('xml:id'), tag.get('id')])
-					
-					# command doc
-					doc_desc = [_stripdocstr(tag.get_text()) for tag in desc_tag.find_all('para')]
-					doc_notes = [_stripdocstr(tag.get_text()) for tag in notes_tag.find_all('para')] if notes_tag else []
-					doc_errors = [_stripdocstr(tag.get_text()) for tag in errors_tag.find_all('para')] if errors_tag else []
-					
-					# parameter doc
-					param_doc = dict()
-					# some commands have no parameters
-					if params_tag:
-						for ptag in params_tag.variablelist.find_all('varlistentry'):
-							# these param tags can be for several parameters
-							pnames = [tag.string.strip() for tag in ptag.term.find_all('parameter')]
-							doc = []
-							for ltag in ptag.find_all('listitem'):
-								doc += [_stripdocstr(tag.get_text()) for tag in ltag.find_all('para')]
-							# }
-							for pname in pnames: param_doc[pname] = doc
-						# }
-					# }
-					
-					# apply to commands and params
-					for cmd in doccmds:
-						cmd.doc_desc = doc_desc
-						cmd.doc_notes = doc_notes
-						cmd.doc_errors = doc_errors
-						for (pname, pdoc) in param_doc.iteritems():
-							param = cmd.find_param(pname)
-							if param:
-								param.doc = pdoc
+						
+						# no relevant GL commands -> do nothing
+						if len(doccmds) == 0: continue
+						
+						# doc section tags
+						# both 'id' (man2, man3) and 'xml:id' (man4) are used
+						params_tag = soup.refentry.find(lambda tag: tag.name == 'refsect1' and 'parameters' in [tag.get('xml:id'), tag.get('id')])
+						desc_tag = soup.refentry.find(lambda tag: tag.name == 'refsect1' and 'description' in [tag.get('xml:id'), tag.get('id')])
+						notes_tag = soup.refentry.find(lambda tag: tag.name == 'refsect1' and 'notes' in [tag.get('xml:id'), tag.get('id')])
+						errors_tag = soup.refentry.find(lambda tag: tag.name == 'refsect1' and 'errors' in [tag.get('xml:id'), tag.get('id')])
+						
+						# command doc
+						doc_desc = [_stripdocstr(tag.get_text()) for tag in desc_tag.find_all('para')]
+						doc_notes = [_stripdocstr(tag.get_text()) for tag in notes_tag.find_all('para')] if notes_tag else []
+						doc_errors = [_stripdocstr(tag.get_text()) for tag in errors_tag.find_all('para')] if errors_tag else []
+						
+						# parameter doc
+						param_doc = dict()
+						# some commands have no parameters
+						if params_tag:
+							for ptag in params_tag.variablelist.find_all('varlistentry'):
+								# these param tags can be for several parameters
+								pnames = [tag.string.strip() for tag in ptag.term.find_all('parameter')]
+								doc = []
+								for ltag in ptag.find_all('listitem'):
+									doc += [_stripdocstr(tag.get_text()) for tag in ltag.find_all('para')]
+								# }
+								for pname in pnames: param_doc[pname] = doc
 							# }
 						# }
+						
+						# apply to commands and params
+						for cmd in doccmds:
+							cmd.doc_desc = doc_desc
+							cmd.doc_notes = doc_notes
+							cmd.doc_errors = doc_errors
+							for (pname, pdoc) in param_doc.iteritems():
+								param = cmd.find_param(pname)
+								if param:
+									param.doc = pdoc
+								# }
+							# }
+						# }
+					
+					except:
+						print >>sys.stderr, 'glapi.py: error processing {name} in {man}.zip'.format(name=filename, man=man)
+						raise
 					# }
-				
-				except:
-					print >>sys.stderr, 'glapi.py: error processing file', filename
-					raise
 				# }
 			# }
 		# }
+	except IOError:
+		print >>sys.stderr, 'glapi: {man}.zip not readable'.format(man=man)
 	# }
 # }
 
