@@ -11,14 +11,6 @@
 
 import sys
 
-try:
-	import bs4
-except ImportError:
-	sys.stderr.write('ERROR: Python module bs4 is required to make GLAER.\n')
-	sys.stderr.write('Run "pip install [--user] beautifulsoup4" to satisfy.\n')
-	sys.exit('makeglaer.py: Requirements not satisfied. Aborting.')
-# }
-
 import os, re, inspect
 import argparse
 

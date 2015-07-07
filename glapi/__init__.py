@@ -15,11 +15,21 @@
 # @author Ben Allen
 #
 
-# TODO nice errors here
-import lxml
+import sys
 
+# BeautifulSoup4 needs lxml to parse xml
+try:
+	import lxml
+except ImportError:
+	print >>sys.stderr, 'GLAER: Python module lxml is required'
+	print >>sys.stderr, 'GLAER: Run "pip install [--user] lxml" to satisfy'
+	raise
+# }
+
+# We package BeautifulSoup4, so this shouldn't be a problem
 import bs4
-import sys, os, errno, re, inspect, httplib, zipfile, time
+
+import os, errno, re, inspect, httplib, zipfile, time
 
 # get script directory so we can find resources
 thisdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
