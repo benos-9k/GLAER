@@ -29,46 +29,32 @@ except ImportError:
 # We package BeautifulSoup4, so this shouldn't be a problem
 import bs4
 
-import os, errno, re, inspect, httplib, zipfile, time
+import os, errno, re, inspect, urllib2, zipfile, time
 
 # get script directory so we can find resources
 thisdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
-# connection to khronos cvs server
-_khronos_cvs_connection = None
-
-def _get_khronos_cvs_page(url, if_modified_since=None):
-	'''download a cvs.khronos.org page; returns a str (does not decode), or None if not modified'''
-	# reuse connection
-	# not actually useful - the server responds with 'connection: close'
-	global _khronos_cvs_connection
-	if _khronos_cvs_connection is None: _khronos_cvs_connection = httplib.HTTPSConnection('cvs.khronos.org')
+def _get_page(url, if_modified_since=None):
+	'''download a webpage; returns a str (does not decode), or None if not modified'''
+	headers = { 'User-Agent': 'Mozilla/5.0' }
+	if if_modified_since is not None: headers['If-Modified-Since'] = if_modified_since
+	req = urllib2.Request(url, headers=headers)
 	try:
-		# send request
-		headers = { 'User-Agent': 'Mozilla/5.0', 'Connection': 'keep-alive' }
-		if if_modified_since: headers['If-Modified-Since'] = if_modified_since
-		_khronos_cvs_connection.request('GET', url, headers=headers)
-		res = _khronos_cvs_connection.getresponse()
-		# read response
-		page = res.read()
-		# return None if not modified
-		if res.status == httplib.NOT_MODIFIED: return None
-		return page
-	except httplib.ImproperConnectionState:
-		# if something broke, reconnect and try again
-		_khronos_cvs_connection = None
-		return _get_khronos_cvs_page(url, if_modified_since=if_modified_since)
+		return urllib2.urlopen(req).read()
+	except urllib2.HTTPError, e:
+		if e.code == 304: return None
+		raise
 	# }
 # }
 
 def _get_manpage(manpath, if_modified_since=None):
 	'''download a GL manpage, e.g. 'man2/glAccum.xml' '''
-	return _get_khronos_cvs_page('/svn/repos/ogl/trunk/ecosystem/public/sdk/docs/' + manpath, if_modified_since=if_modified_since)
+	return _get_page('https://cvs.khronos.org/svn/repos/ogl/trunk/ecosystem/public/sdk/docs/' + manpath, if_modified_since=if_modified_since)
 # }
 
-def _get_apipage(apipath):
+def _get_apipage(apipath, if_modified_since=None):
 	'''download a GL API spec page, e.g. 'gl.xml' '''
-	return _get_khronos_cvs_page('/svn/repos/ogl/trunk/doc/registry/public/api/' + apipath, if_modified_since=if_modified_since)
+	return _get_page('https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/' + apipath, if_modified_since=if_modified_since)
 # }
 
 def _ensure_dir_exists(path):
