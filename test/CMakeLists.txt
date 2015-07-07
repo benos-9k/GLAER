@@ -4,9 +4,6 @@ if(NOT TARGET glfw)
 	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw-3.0.3")
 endif()
 
-# don't dereference quoted variables in if() args
-cmake_policy(SET CMP0054 NEW)
-
 # Compile options
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	add_compile_options(/W4)
