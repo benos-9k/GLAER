@@ -154,7 +154,10 @@ static GlaerPFn glaerGetProcAddressGLX(const GLchar *procname) {
 
 static int glaerCheckInitGLX(GlaerContext *ctx) {
 	if (!glaerCheckContext(ctx)) return 0;
-	
+	if (!glXGetCurrentContext()) {
+		glaerReportError("Current thread has no OpenGL context");
+		return 0;
+	}
 	return 1;
 }
 
