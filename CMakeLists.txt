@@ -1,7 +1,8 @@
-project(GLAER C CXX)
 
 # require new behaviour of: CMP0054
 cmake_minimum_required(VERSION 3.1)
+
+project(GLAER C CXX)
 
 # enable IDE project folders
 SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
