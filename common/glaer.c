@@ -115,7 +115,7 @@ static GlaerPFn glaerGetProcAddressNSGL(const char *name) {
 static int glaerCheckInitNSGL(GlaerContext *ctx) {
 	if (!glaerCheckContext(ctx)) return 0;
 	
-	return 1
+	return 1;
 }
 
 #define GLAER_GET_PROC_ADDRESS_DECL
