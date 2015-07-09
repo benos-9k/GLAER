@@ -10,7 +10,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	add_compile_options(-std=c++1y -Wall -Wextra -pedantic)
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Apple)?Clang$")
-	add_compile_options(-std=c++1y -pthread -Wall -Wextra -pedantic)
+	add_compile_options(-std=c++1y -Wall -Wextra -pedantic)
 endif()
 
 # test exe target

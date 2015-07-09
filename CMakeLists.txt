@@ -71,7 +71,7 @@ elseif(APPLE)
 	# dynamic loading ???
 endif()
 
-# shared library usage requirements
+# usage requirements as shared/static lib
 if(BUILD_SHARED_LIBS)
 	# define macro for building DLL
 	target_compile_definitions(glaer PRIVATE GLAER_BUILD_DLL)
