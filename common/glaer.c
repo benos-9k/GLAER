@@ -31,7 +31,7 @@ static int glaerCheckContext(GlaerContext *ctx) {
 
 /* system-specific entrypoint retrieval and error checking */
 #if defined(_WIN32)
-/* Windows: wglGetProcAddress and GetProcAddress */
+/* Windows */
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -89,42 +89,49 @@ static int glaerCheckInitWGL(HMODULE module, GlaerContext *ctx) {
 #define glaerCheckInit(ctx) glaerCheckInitWGL(module, ctx)
 
 #elif defined(__APPLE__)
-/* Mac: ? */
+/* Apple */
+#include "TargetConditionals.h"
 
-/* https://developer.apple.com/library/mac/documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/opengl_entrypts/opengl_entrypts.html */
+#if TARGET_OS_MAC
+// MacOS
+#include <dlfcn.h>
 
-#include <mach-o/dyld.h>
-#include <stdlib.h>
-#include <string.h>
-
-static GlaerPFn glaerGetProcAddressNSGL(const char *name) {
-	/* I think this relies on the GL lib being loaded already, but that shouldn't be a problem. */
-	NSSymbol symbol;
-	char *symbolName;
-	symbolName = (char *) malloc(strlen(name) + 2);
-	strcpy(symbolName + 1, name);
-	symbolName[0] = '_';
-	symbol = NULL;
-	if (NSIsSymbolNameDefined(symbolName)) {
-		symbol = NSLookupAndBindSymbol(symbolName);
-	}
-	free(symbolName);
-	return symbol ? ((GlaerPFn) NSAddressOfSymbol(symbol)) : NULL;
+static GlaerPFn glaerGetProcAddressMac(void *module, const GLchar *procname) {
+	void *p;
+	p = dlsym(module, procname);
+	/* we're expecting some errors, so just clear them */
+	if (!p) dlerror();
+	return (GlaerPFn) p;
 }
 
-static int glaerCheckInitNSGL(GlaerContext *ctx) {
+static int glaerCheckInitMac(void *module, GlaerContext *ctx) {
 	if (!glaerCheckContext(ctx)) return 0;
-	
+	if (!module) {
+		glaerReportError(dlerror());
+		return 0;
+	}
 	return 1;
 }
 
-#define GLAER_GET_PROC_ADDRESS_DECL
-#define GLAER_GET_PROC_ADDRESS_INIT
-#define glaerGetProcAddress(procname) glaerGetProcAddressNSGL(procname)
-#define glaerCheckInit(ctx) glaerCheckInitNSGL(ctx)
+#define GLAER_GET_PROC_ADDRESS_DECL void *module;
+#define GLAER_GET_PROC_ADDRESS_INIT module = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib", RTLD_NOW | RTLD_GLOBAL);
+#define glaerGetProcAddress(procname) glaerGetProcAddressMac(module, procname)
+#define glaerCheckInit(ctx) glaerCheckInitMac(module, ctx)
+
+#elif TARGET_OS_IPHONE
+// iOS device
+#error iOS is not supported yet
 
 #else
-/* GLX (linux etc): glXGetProcAddress */
+#error unsupported __APPLE__ target
+#endif
+
+#elif defined(__ANDROID__)
+// Android
+#error Android is not supported yet
+
+#else
+/* Assume GLX (linux etc) */
 
 /*
  * glXGetProcAddress requires GLX 1.4.
