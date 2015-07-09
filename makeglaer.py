@@ -149,15 +149,19 @@ print 'GLAER: OpenGL API specification loaded.'
 def build_glaer_h():
 	out = open(_out_h, 'w')
 	
-	# header guard and extern "C"
+	# header guard, copyrights, and extern "C"
 	out.write('''
 #ifndef GLAER_H
 #define GLAER_H
 
+/*
+ * {copyright_khronos}
+ */
+
 #ifdef __cplusplus
-extern "C" {
+extern "C" {{
 #endif
-''')
+'''.format(copyright_khronos = '\n * '.join(glapi.copyright.split('\n'))))
 	
 	# version numbers
 	out.write('''

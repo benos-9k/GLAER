@@ -364,6 +364,9 @@ commands = dict()
 # parse the api specification
 _apisoup = bs4.BeautifulSoup(open(thisdir + '/api/gl.xml'), features='xml')
 
+# Khronos copyright notice
+copyright = _apisoup.registry.comment.get_text()
+
 def _stripdocstr(s):
 	return re.sub('\n\s+', '\n', s.strip())
 # }
