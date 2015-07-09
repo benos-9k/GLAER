@@ -23,11 +23,23 @@ endif()
 # ensure output directories exist
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/include/GLAER")
 
-# generate GLAER source files
+# output files
+set(GLAER_HEADER "${PROJECT_BINARY_DIR}/src/include/GLAER/glaer.h")
+set(GLAER_SOURCE "${PROJECT_BINARY_DIR}/src/glaer.c")
+
+# ensure dummy output files exist
+if(NOT EXISTS ${GLAER_HEADER})
+	file(WRITE ${GLAER_HEADER} "#error GLAER has not been generated")
+endif()
+if(NOT EXISTS ${GLAER_SOURCE})
+	file(WRITE ${GLAER_SOURCE} "#include <GLAER/glaer.h>")
+endif()
+
+# generate GLAER output files
 add_custom_command(
 	OUTPUT
-		"${PROJECT_BINARY_DIR}/src/include/GLAER/glaer.h"
-		"${PROJECT_BINARY_DIR}/src/glaer.c"
+		${GLAER_HEADER}
+		${GLAER_SOURCE}
 	DEPENDS
 		"${PROJECT_SOURCE_DIR}/makeglaer.py"
 		"${PROJECT_SOURCE_DIR}/glapi/__init__.py"
@@ -39,8 +51,8 @@ add_custom_command(
 		"${PROJECT_SOURCE_DIR}/common/glaer.c"
 	COMMAND
 		${PYTHON_EXECUTABLE} "${PROJECT_SOURCE_DIR}/makeglaer.py"
-		"-oh" "${PROJECT_BINARY_DIR}/src/include/GLAER/glaer.h"
-		"-oc" "${PROJECT_BINARY_DIR}/src/glaer.c"
+		"-oh" ${GLAER_HEADER}
+		"-oc" ${GLAER_SOURCE}
 		"-g" ${GLAER_GENERATOR}
 	VERBATIM
 )
@@ -48,8 +60,8 @@ add_custom_command(
 # GLAER lib target
 add_library(
 	glaer
-	"${PROJECT_BINARY_DIR}/src/include/GLAER/glaer.h"
-	"${PROJECT_BINARY_DIR}/src/glaer.c"
+	${GLAER_HEADER}
+	${GLAER_SOURCE}
 )
 
 set_property(TARGET glaer PROPERTY FOLDER "GLAER")
