@@ -27,12 +27,16 @@ file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/include/GLAER")
 set(GLAER_HEADER "${PROJECT_BINARY_DIR}/src/include/GLAER/glaer.h")
 set(GLAER_SOURCE "${PROJECT_BINARY_DIR}/src/glaer.c")
 
-# ensure dummy output files exist
-if(NOT EXISTS ${GLAER_HEADER})
+# dependency to force generation
+set(GLAER_FORCE_GENERATE "${PROJECT_BINARY_DIR}/src/__force_generate")
+
+# if GLAER hasn't been (completely) generated previously
+if((NOT EXISTS ${GLAER_HEADER}) OR (NOT EXISTS ${GLAER_SOURCE}) OR (NOT EXISTS ${GLAER_FORCE_GENERATE}))
+	# ensure dummy output files exist
 	file(WRITE ${GLAER_HEADER} "#error GLAER has not been generated")
-endif()
-if(NOT EXISTS ${GLAER_SOURCE})
-	file(WRITE ${GLAER_SOURCE} "#include <GLAER/glaer.h>")
+	file(WRITE ${GLAER_SOURCE} "#error GLAER has not been generated")
+	# touch a dependency of glaer so the dummy files aren't considered up to date
+	execute_process(COMMAND ${CMAKE_COMMAND} -E touch ${GLAER_FORCE_GENERATE})
 endif()
 
 # generate GLAER output files
@@ -41,6 +45,7 @@ add_custom_command(
 		${GLAER_HEADER}
 		${GLAER_SOURCE}
 	DEPENDS
+		${GLAER_FORCE_GENERATE}
 		"${PROJECT_SOURCE_DIR}/makeglaer.py"
 		"${PROJECT_SOURCE_DIR}/glapi/__init__.py"
 		"${PROJECT_SOURCE_DIR}/glapi/api/gl.xml"
