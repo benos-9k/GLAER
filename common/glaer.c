@@ -93,7 +93,7 @@ static int glaerCheckInitWGL(HMODULE module, GlaerContext *ctx) {
 #include "TargetConditionals.h"
 
 #if TARGET_OS_MAC
-// MacOS
+/* MacOS */
 #include <dlfcn.h>
 
 static GlaerPFn glaerGetProcAddressMac(void *module, const GLchar *procname) {
@@ -119,7 +119,7 @@ static int glaerCheckInitMac(void *module, GlaerContext *ctx) {
 #define glaerCheckInit(ctx) glaerCheckInitMac(module, ctx)
 
 #elif TARGET_OS_IPHONE
-// iOS device
+/* iOS device */
 #error iOS is not supported yet
 
 #else
@@ -127,7 +127,7 @@ static int glaerCheckInitMac(void *module, GlaerContext *ctx) {
 #endif
 
 #elif defined(__ANDROID__)
-// Android
+/* Android */
 #error Android is not supported yet
 
 #else
