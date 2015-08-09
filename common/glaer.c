@@ -41,7 +41,7 @@ static int glaerCheckContext(GlaerContext *ctx) {
 #define NOMINMAX
 #endif
 
-/* prevent redefinition; we don't need it anymore anyway */
+/* prevent redefinition; our definition should be the same as windows.h  */
 #undef APIENTRY
 
 #include <windows.h>
@@ -175,15 +175,15 @@ static int glaerCheckInitGLX(GlaerContext *ctx) {
 
 #endif
 
-void glaerSetCurrentContextProvider(GlaerContextProviderProc p) {
+void APIENTRY glaerSetCurrentContextProvider(GlaerContextProviderProc p) {
 	glaer_current_context_provider = p;
 }
 
-void glaerSetErrorCallback(GlaerErrorCallbackProc p) {
+void APIENTRY glaerSetErrorCallback(GlaerErrorCallbackProc p) {
 	glaer_error_callback = p;
 }
 
-GlaerContext * glaerGetCurrentContext() {
+GlaerContext * APIENTRY glaerGetCurrentContext() {
 	return glaer_current_context_provider();
 }
 
