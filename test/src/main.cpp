@@ -216,6 +216,8 @@ int main() {
 
 	cout << "GL version string: " << glGetString(GL_VERSION) << endl;
 
+	cout << "have glUseProgram: " << GLAER_HAVE_FUN(glUseProgram) << endl;
+
 	// compile shader
 	GLuint prog = makeProgram("330 core", { GL_VERTEX_SHADER, GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER }, shader_prog_src);
 

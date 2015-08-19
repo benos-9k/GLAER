@@ -21,9 +21,6 @@
 /* specific bitwidth int types */
 #include <stdint.h>
 
-/* what was this for again? NULL? */
-#include <stdlib.h>
-
 /* calling convention */
 #ifndef APIENTRY
 #ifdef _WIN32
@@ -155,7 +152,8 @@ GLAERAPI GLboolean APIENTRY glaerInitCurrentContext();
 
 /*
  * Test for the presence of a GL function in the current GLAER context.
- * Evaluates to GL_TRUE if function is available, GL_FALSE otherwise.
+ * Evaluates to GL_TRUE (1) if function is available, GL_FALSE (0) otherwise,
+ * including the case where there is no current context.
  * Expects the GLAER version of the function name; ordinarily the plain
  * GL function names are defined by GLAER such that they are usable here.
  * E.g. if (GLAER_HAVE_FUN(glUniform1d)) { ... }
@@ -163,7 +161,7 @@ GLAERAPI GLboolean APIENTRY glaerInitCurrentContext();
  * supported by the associated GL context.
  * Thread-safety: as for glaerGetCurrentContext().
  */
-#define GLAER_HAVE_FUN(glaerFun) (glaerGetCurrentContext()->glaerFun != NULL)
+#define GLAER_HAVE_FUN(glaerFun) ((glaerGetCurrentContext() && glaerGetCurrentContext()->glaerFun) ? 1 : 0)
 
 
 /*** GLAER: end manually authored code ***/
