@@ -18,7 +18,7 @@ import argparse
 thisdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
 # main version number
-__version__ = '0.0.0'
+__version__ = '0.1.0'
 
 # output files (default paths)
 _out_h = './glaer.h'
