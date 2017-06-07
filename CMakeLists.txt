@@ -7,11 +7,15 @@ project(GLAER C CXX)
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 # output directories
-# FIXME this is kinda necessary for building shared libs to allow them to be loaded
-# however, it has to be set before creating the targets so overriding it is bad
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+# necessary for building shared libs so they all go in the same place and can then be loaded
+# however, the current value takes effect when a target is created, so overriding as a subproject would be bad
+# therefore, we only set the output directories if we are the top-level project
+if("${CMAKE_SOURCE_DIR}" STREQUAL "${PROJECT_SOURCE_DIR}")
+	message(STATUS "GLAER: setting CMake output directories to '${CMAKE_BINARY_DIR}/bin'")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+endif()
 
 # enable IDE project folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -38,23 +42,23 @@ set(GLAER_HEADER "${PROJECT_BINARY_DIR}/src/include/GLAER/glaer.h")
 set(GLAER_SOURCE "${PROJECT_BINARY_DIR}/src/glaer.c")
 
 # if GLAER hasn't been (completely) generated previously
-if((NOT EXISTS ${GLAER_HEADER}) OR (NOT EXISTS ${GLAER_SOURCE})) # OR (NOT EXISTS ${GLAER_FORCE_GENERATE}))
+if((NOT EXISTS "${GLAER_HEADER}") OR (NOT EXISTS "${GLAER_SOURCE}"))
 	# generate GLAER now, at cmake time, to improve the IDE experience on first run
 	# GLAER will (probably) be re-generated on first build
 	message(STATUS "Generating GLAER...")
 	execute_process(COMMAND
-		${PYTHON_EXECUTABLE} "${PROJECT_SOURCE_DIR}/makeglaer.py"
-		"-oh" ${GLAER_HEADER}
-		"-oc" ${GLAER_SOURCE}
-		"-g" ${GLAER_GENERATOR}
+		"${PYTHON_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/makeglaer.py"
+		"-oh" "${GLAER_HEADER}"
+		"-oc" "${GLAER_SOURCE}"
+		"-g" "${GLAER_GENERATOR}"
 	)
 endif()
 
 # generate GLAER output files
 add_custom_command(
 	OUTPUT
-		${GLAER_HEADER}
-		${GLAER_SOURCE}
+		"${GLAER_HEADER}"
+		"${GLAER_SOURCE}"
 	DEPENDS
 		"${PROJECT_SOURCE_DIR}/makeglaer.py"
 		"${PROJECT_SOURCE_DIR}/glapi/__init__.py"
@@ -65,18 +69,18 @@ add_custom_command(
 		"${PROJECT_SOURCE_DIR}/common/glaer.h"
 		"${PROJECT_SOURCE_DIR}/common/glaer.c"
 	COMMAND
-		${PYTHON_EXECUTABLE} "${PROJECT_SOURCE_DIR}/makeglaer.py"
-		"-oh" ${GLAER_HEADER}
-		"-oc" ${GLAER_SOURCE}
-		"-g" ${GLAER_GENERATOR}
+		"${PYTHON_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/makeglaer.py"
+		"-oh" "${GLAER_HEADER}"
+		"-oc" "${GLAER_SOURCE}"
+		"-g" "${GLAER_GENERATOR}"
 	VERBATIM
 )
 
 # GLAER lib target
 add_library(
 	glaer
-	${GLAER_HEADER}
-	${GLAER_SOURCE}
+	"${GLAER_HEADER}"
+	"${GLAER_SOURCE}"
 )
 
 set_property(TARGET glaer PROPERTY FOLDER "GLAER")
