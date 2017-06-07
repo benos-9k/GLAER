@@ -232,7 +232,7 @@ extern "C" {{
 	out.write('\n/* Real functions in GLAER namespace */\n')
 	for cmd in glapi.commands.itervalues():
 		out.write(_gen.comment_command(cmd))
-		out.write('GLAERAPI ' + cmd.format_proto('APIENTRY glaer_{name}'.format(name=cmd.name)) + '(')
+		out.write('GLAER_API ' + cmd.format_proto('APIENTRY glaer_{name}'.format(name=cmd.name)) + '(')
 		out.write(', '.join([param.format_proto() for param in cmd.params]))
 		out.write(');\n')
 	# }
@@ -289,7 +289,7 @@ GLboolean APIENTRY glaerInitCurrentContext() {
 	# glaer_gl function definitions
 	out.write('\n/* glaer_gl function definitions */\n')
 	for cmd in glapi.commands.itervalues():
-		out.write(cmd.format_proto('APIENTRY glaer_{name}'.format(name=cmd.name)) + '(')
+		out.write('GLAER_API ' + cmd.format_proto('APIENTRY glaer_{name}'.format(name=cmd.name)) + '(')
 		out.write(', '.join([param.format_proto() for param in cmd.params]))
 		# function body depends on whether function returns void or not
 		if cmd.format_proto('').strip() == 'void':

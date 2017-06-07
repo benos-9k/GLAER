@@ -31,21 +31,27 @@
 #endif
 
 /* dll import / export */
-#if defined(_WIN32) && !defined(GLAPI)
-#if defined(_MSC_VER) || defined(__BORLANDC__) || defined(__POCC__)
-/* Microsoft Visual C++, Borland C++ Builder and Pelles C */
-#if defined(GLAER_DLL)
-/* Using GLAER as a DLL */
-#define GLAERAPI __declspec(dllimport)
-#elif defined(GLAER_BUILD_DLL)
-/* Building GLAER as a DLL */
-#define GLAERAPI __declspec(dllexport)
+#if defined(GLAER_SHARED)
+#if defined(_WIN32)
+/* MSVC, MinGW etc. */
+#if defined(GLAER_EXPORTS)
+/* Building GLAER */
+#define GLAER_API __declspec(dllexport)
+#else
+/* Importing GLAER */
+#define GLAER_API __declspec(dllimport)
+#endif
+#elif defined(__GNUC__)
+/* GCC, Clang etc. */
+#if defined(GLAER_EXPORTS)
+/* Building GLAER */
+#define GLAER_API __attribute__((visibility("default"),used))
 #endif
 #endif
 #endif
 
-#ifndef GLAERAPI
-#define GLAERAPI extern
+#ifndef GLAER_API
+#define GLAER_API extern
 #endif
 
 
@@ -128,27 +134,27 @@ typedef void (APIENTRY *GlaerPFn)();
  * Set the function that will be called to determine the current context.
  * Thread-safety: main thread only.
  */
-GLAERAPI void APIENTRY glaerSetCurrentContextProvider(GlaerContextProviderProc);
+GLAER_API void APIENTRY glaerSetCurrentContextProvider(GlaerContextProviderProc);
 
 /*
  * Set the error callback.
  * Thread-safety: main thread only.
  */
-GLAERAPI void APIENTRY glaerSetErrorCallback(GlaerErrorCallbackProc);
+GLAER_API void APIENTRY glaerSetErrorCallback(GlaerErrorCallbackProc);
 
 /*
  * Get a pointer to the current GLAER context.
  * Wrapper for the user function pointer set by glaerSetCurrentContextProvider().
  * Thread-safety: as for the user context provider.
  */
-GLAERAPI GlaerContext * APIENTRY glaerGetCurrentContext();
+GLAER_API GlaerContext * APIENTRY glaerGetCurrentContext();
 
 /*
  * Initialize the current GLAER context with function pointers for the current GL context.
  * Returns GL_TRUE on success, GL_FALSE otherwise.
  * Thread-safety: as for glaerGetCurrentContext(). Initialization itself is thread-safe.
  */
-GLAERAPI GLboolean APIENTRY glaerInitCurrentContext();
+GLAER_API GLboolean APIENTRY glaerInitCurrentContext();
 
 /*
  * Test for the presence of a GL function in the current GLAER context.

@@ -175,15 +175,15 @@ static int glaerCheckInitGLX(GlaerContext *ctx) {
 
 #endif
 
-void APIENTRY glaerSetCurrentContextProvider(GlaerContextProviderProc p) {
+GLAER_API void APIENTRY glaerSetCurrentContextProvider(GlaerContextProviderProc p) {
 	glaer_current_context_provider = p;
 }
 
-void APIENTRY glaerSetErrorCallback(GlaerErrorCallbackProc p) {
+GLAER_API void APIENTRY glaerSetErrorCallback(GlaerErrorCallbackProc p) {
 	glaer_error_callback = p;
 }
 
-GlaerContext * APIENTRY glaerGetCurrentContext() {
+GLAER_API GlaerContext * APIENTRY glaerGetCurrentContext() {
 	return glaer_current_context_provider();
 }
 

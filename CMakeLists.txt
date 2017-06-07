@@ -4,13 +4,23 @@ cmake_minimum_required(VERSION 3.1)
 
 project(GLAER C CXX)
 
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+
+# output directories
+# FIXME this is kinda necessary for building shared libs to allow them to be loaded
+# however, it has to be set before creating the targets so overriding it is bad
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
 # enable IDE project folders
-SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # OpenGL is required
 find_package(OpenGL REQUIRED)
 
 # python2 is required to generate GLAER source files
+# TODO python3: support or error
 find_package(PythonInterp 2.7 REQUIRED)
 
 # generator; allow user to override
@@ -82,23 +92,23 @@ target_link_libraries(glaer PRIVATE ${OPENGL_LIBRARIES})
 
 # system-specific library usage requirements
 if(WIN32)
-	# dynamic loading
+	# dynamic loading (pretty sure you can't _not_ link kernel32 anyway)
 	target_link_libraries(glaer PRIVATE kernel32)
-elseif(APPLE)
-	# dynamic loading ???
+elseif(UNIX)
+	# dynamic loading
+	target_link_libraries(glaer PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
-# usage requirements as shared/static lib
+# shared vs. static
+set_target_properties(glaer PROPERTIES DEFINE_SYMBOL "GLAER_EXPORTS")
 if(BUILD_SHARED_LIBS)
-	# define macro for building DLL
-	target_compile_definitions(glaer PRIVATE GLAER_BUILD_DLL)
-	# define macro for importing DLL
-	target_compile_definitions(glaer INTERFACE GLAER_DLL)
+	target_compile_definitions(glaer PUBLIC GLAER_SHARED)
 endif()
 
 # test project
-add_subdirectory(test)
-
+if (EXISTS "${PROJECT_SOURCE_DIR}/test")
+	add_subdirectory(test)
+endif()
 
 
 
