@@ -1,13 +1,15 @@
 # GLAER
 ###### _OpenGL API Entrypoint Retriever_
 
-GLAER is a C wrapper for the OpenGL API that loads entrypoints at runtime. Source files are generated inside a CMake project with a Python script that parses the OpenGL XML documentation. The script inlines documentation in the generated header if a supported IDE (currently only Visual Studio) is detected.
+GLAER is a C wrapper for the OpenGL API that loads entrypoints at runtime. Source files are generated inside a CMake project with a Python script that parses the OpenGL XML documentation. The script inlines documentation in the generated header if a supported IDE (currently only Visual Studio) is detected; this enables Visual Studio's quick info tooltips to provide basic function and parameter help.
 
-This is currently _alpha_ software; it has only just reached the point where things actually work.
+GLAER can be built as a static library or shared library (DLL) by setting the CMake option `BUILD_SHARED_LIBS`.
+
+GLAER currently supports Windows, Linux and OSX, although development and testing primarily happens on Windows.
 
 ## OpenGL XML Documentation
 
-The API specification './api/gl.xml' will be downloaded if it is not present. The documentation is not critical to operation, and as such will not be downloaded if it does not exist. GLAER does however come with both the API specification and documentation already present. To update the API specification and documentation, import the Python module `glapi` and call `glapi.update_api()` and `glapi.update_docs()` respectively, then reload the module.
+The [API specification](https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/) './api/gl.xml' will be downloaded if it is not present. The [API documentation](https://cvs.khronos.org/svn/repos/ogl/trunk/ecosystem/public/sdk/docs/) is not critical to operation, and as such will not be downloaded if it does not exist. GLAER does however come with both the API specification and documentation already present. To update the API specification and documentation, import the Python module `glapi` and call `glapi.update_api()` and `glapi.update_docs()` respectively, then reload the module.
 
 ## Python
 
